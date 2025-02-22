@@ -2,29 +2,21 @@ package io.github.t45k.jooq_rollback
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.test.runTest
-import org.jooq.DSLContext
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitOne
-import org.springframework.transaction.reactive.TransactionalOperator
-import org.springframework.transaction.reactive.executeAndAwait
-import reactor.core.publisher.Mono
 
 @SpringBootTest
 class JdbcRollbackApplicationTest {
     @Autowired
-    lateinit var dslContext: DSLContext
-
-    @Autowired
     lateinit var databaseClient: DatabaseClient
 
     @Autowired
-    lateinit var transactionalOperator: TransactionalOperator
+    lateinit var rollbackService: RollbackService
 
     @BeforeEach
     fun setup() = runTest {
@@ -35,19 +27,13 @@ class JdbcRollbackApplicationTest {
     @Test
     fun testRollback() = runTest {
         try {
-            transactionalOperator.executeAndAwait {
-                databaseClient.sql("insert into test values (1)").await()
-                throw RuntimeException()
-            }
+            rollbackService.onDatabaseClient()
         } catch (_: Exception) {
             assertEquals(0L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
         }
 
         try {
-            transactionalOperator.executeAndAwait {
-                Mono.from(dslContext.query("insert into test values (2)")).awaitSingle()
-                throw RuntimeException()
-            }
+            rollbackService.onDSLContext()
         } catch (_: Exception) {
             assertEquals(0L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
         }
