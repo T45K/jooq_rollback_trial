@@ -1,6 +1,7 @@
 package io.github.t45k.jooq_rollback
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.test.runTest
 import org.jooq.DSLContext
@@ -12,6 +13,7 @@ import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitOne
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
+import reactor.core.publisher.Mono
 
 @SpringBootTest
 class JdbcRollbackApplicationTest {
@@ -38,18 +40,16 @@ class JdbcRollbackApplicationTest {
                 throw RuntimeException()
             }
         } catch (_: Exception) {
+            assertEquals(0L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
         }
-
-        println(databaseClient.sql("select count(*) from test").fetch().awaitOne())
 
         try {
             transactionalOperator.executeAndAwait {
-                dslContext.query("insert into test values (2)").awaitSingle()
+                Mono.from(dslContext.query("insert into test values (2)")).awaitSingle()
                 throw RuntimeException()
             }
         } catch (_: Exception) {
+            assertEquals(0L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
         }
-
-        println(databaseClient.sql("select count(*) from test").fetch().awaitOne())
     }
 }

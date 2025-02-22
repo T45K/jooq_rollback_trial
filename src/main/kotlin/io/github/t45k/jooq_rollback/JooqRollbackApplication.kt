@@ -2,12 +2,13 @@ package io.github.t45k.jooq_rollback
 
 import io.r2dbc.spi.ConnectionFactory
 import org.jooq.DSLContext
-import org.jooq.impl.DSL
+import org.jooq.impl.DefaultConfiguration
 import org.jooq.reactor.extensions.CoreSubscriberProvider
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.r2dbc.connection.TransactionAwareConnectionFactoryProxy
 
 @SpringBootApplication
 class JooqRollbackApplication
@@ -19,8 +20,11 @@ fun main(args: Array<String>) {
 @Configuration
 class JooqConfiguration {
     @Bean
-    fun dslContext(connectionFactory: ConnectionFactory): DSLContext =
-        DSL.using(connectionFactory)
-            .apply { configuration().set(CoreSubscriberProvider()) }
+    fun dslContext(connectionFactory: ConnectionFactory): DSLContext {
+        val transactionAwareConnectionFactoryProxy = TransactionAwareConnectionFactoryProxy(connectionFactory)
+        return DefaultConfiguration()
+            .set(transactionAwareConnectionFactoryProxy)
+            .set(CoreSubscriberProvider())
             .dsl()
+    }
 }
