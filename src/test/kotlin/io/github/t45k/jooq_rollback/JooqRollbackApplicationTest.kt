@@ -11,7 +11,7 @@ import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitOne
 
 @SpringBootTest
-class JdbcRollbackApplicationTest {
+class JooqRollbackApplicationTest {
     @Autowired
     lateinit var databaseClient: DatabaseClient
 
