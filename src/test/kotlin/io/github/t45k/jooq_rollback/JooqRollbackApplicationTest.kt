@@ -56,4 +56,14 @@ class JooqRollbackApplicationTest {
             assertEquals(0L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
         }
     }
+
+    @Test
+    fun testRollbackFailure() = runTest {
+        try {
+            rollbackService.onDSLContextWithoutMonoWrapping()
+            assertTrue(false)
+        } catch (_: Exception) {
+            assertEquals(1L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
+        }
+    }
 }
