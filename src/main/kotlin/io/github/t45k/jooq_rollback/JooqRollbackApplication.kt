@@ -47,8 +47,19 @@ class RollbackService(
     }
 
     @Transactional
+    fun onDatabaseClientWithReactor(): Mono<Any> =
+        databaseClient.sql("insert into test values (2)")
+            .then()
+            .then(Mono.error(RuntimeException()))
+
+    @Transactional
     suspend fun onDSLContext() {
-        Mono.from(dslContext.query("insert into test values (2)")).awaitSingle()
+        Mono.from(dslContext.query("insert into test values (3)")).awaitSingle()
         throw RuntimeException()
     }
+
+    @Transactional
+    fun onDSLContextWithReactor(): Mono<Any> =
+        Mono.from(dslContext.query("insert into test values (4)"))
+            .then(Mono.error(RuntimeException()))
 }
