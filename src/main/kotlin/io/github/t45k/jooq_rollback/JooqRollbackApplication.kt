@@ -68,4 +68,9 @@ class RollbackService(
         dslContext.query("insert into test values (5)").awaitSingle()
         throw RuntimeException()
     }
+
+    @Transactional
+    suspend fun onDSLContextCommit() {
+        Mono.from(dslContext.query("insert into test values (3)")).awaitSingle()
+    }
 }

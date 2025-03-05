@@ -1,8 +1,5 @@
 package io.github.t45k.jooq_rollback
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -11,6 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitOne
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @SpringBootTest
 class JooqRollbackApplicationTest {
@@ -65,5 +65,11 @@ class JooqRollbackApplicationTest {
         } catch (_: Exception) {
             assertEquals(1L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
         }
+    }
+
+    @Test
+    fun testCommitSuccessful() = runTest {
+        rollbackService.onDSLContextCommit()
+        assertEquals(1L, databaseClient.sql("select count(*) from test").fetch().awaitOne()["COUNT(*)"])
     }
 }
